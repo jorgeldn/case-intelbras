@@ -1,0 +1,5 @@
+/venv/
+/credentials.json
+/files_output/
+/bkp/
+/openpyxl.egg-info/
