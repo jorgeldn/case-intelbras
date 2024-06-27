@@ -76,22 +76,9 @@ def run():
 
     # Crie um pipeline usando o DirectRunner
     with beam.Pipeline(runner='DirectRunner') as p:
-        """"
-        rows = (
-                p
-                | 'ReadFile' >> beam.io.ReadFromText(input_file, skip_header_lines=1)
-                | 'Text to list' >> beam.Map(text_to_list)
-                | 'List do Dict' >> beam.Map(lambda lista: dict(zip(vendedor_colunas, lista)))
-                | 'Limpa dados Vendedores' >> beam.Map(transform_vendedor)
-                #| 'CSV Vendedor' >> beam.Map(tuple_to_csv)
-                | 'Write Vendedor CSV' >> beam.io.WriteToText('files_output/vendedor_processed',file_name_suffix='.csv',header=';'.join(vendedor_colunas), num_shards=1, shard_name_template='')
-                #| 'Cria Chaves' >> beam.Map(vendedor_key)
-                #| 'Agrupa Por chave' >> beam.GroupByKey()
-                | 'PrintElements' >> beam.Map(print)
-        )"""
         vendedor = (
                 p
-                | 'Readfile Vendedor' >> beam.io.ReadFromText('files/vendedor.csv',
+                | 'Readfile Vendedor' >> beam.io.ReadFromText('../files/vendedor.csv',
                                                               skip_header_lines=1)
                 | 'Vendedor to List' >> beam.Map(text_to_list)
                 | 'Vendedor do Dict' >> beam.Map(lambda lista: dict(zip(vendedor_cols, lista)))
@@ -105,7 +92,7 @@ def run():
 
         cliente = (
                 p
-                | 'Readfile Clientes' >> beam.io.ReadFromText('files/clientes.csv',
+                | 'Readfile Clientes' >> beam.io.ReadFromText('../files/clientes.csv',
                                                               skip_header_lines=1)
                 | 'Clientes to List' >> beam.Map(text_to_list)
                 | 'Clientes do Dict' >> beam.Map(lambda lista: dict(zip(clientes_cols, lista)))
@@ -119,7 +106,7 @@ def run():
 
         filial = (
                 p
-                | 'Read Filial CSV from GCS' >> beam.io.ReadFromText('files/filial.csv',
+                | 'Read Filial CSV from GCS' >> beam.io.ReadFromText('../files/filial.csv',
                                                                      skip_header_lines=1)
                 | 'Filial to List' >> beam.Map(text_to_list)
                 | 'Filial do Dict' >> beam.Map(lambda lista: dict(zip(filial_cols, lista)))
@@ -133,7 +120,7 @@ def run():
 
         produtos = (
                 p
-                | 'Read Produtos CSV from GCS' >> beam.io.ReadFromText('files/produtos.csv',
+                | 'Read Produtos CSV from GCS' >> beam.io.ReadFromText('../files/produtos.csv',
                                                                        skip_header_lines=1)
                 | 'Produtos to List' >> beam.Map(text_to_list)
                 | 'Produtos do Dict' >> beam.Map(lambda lista: dict(zip(produtos_cols, lista)))
@@ -147,7 +134,7 @@ def run():
 
         vendas = (
                 p
-                | 'Read Vendas CSV from GCS' >> beam.io.ReadFromText('files/vendas.csv',
+                | 'Read Vendas CSV from GCS' >> beam.io.ReadFromText('../files/vendas.csv',
                                                                      skip_header_lines=1)
                 | 'Vendas to List' >> beam.Map(text_to_list)
                 | 'Vendas to Dict' >> beam.Map(lambda lista: dict(zip(vendas_cols, lista)))

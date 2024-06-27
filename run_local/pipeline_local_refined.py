@@ -1,8 +1,4 @@
 import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions, GoogleCloudOptions, StandardOptions
-from google.auth import default
-from google.auth.exceptions import DefaultCredentialsError
-import os
 
 
 def text_to_list(elemento, delimitador=';'):
@@ -53,36 +49,16 @@ def tupla_para_csv(data):
     return ";".join(csv_line)
 
 
-def run(credentials_path, bucket_name, project_id, region, job_name, argv=None):
-    # Configurar credenciais
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-
-    try:
-        # Testa se as credenciais estão configuradas corretamente
-        default()
-    except DefaultCredentialsError:
-        print("As credenciais não estão configuradas corretamente.")
-        return
-
-    # Configurações do pipeline
-    options = PipelineOptions()
-    google_cloud_options = options.view_as(GoogleCloudOptions)
-    google_cloud_options.project = project_id
-    google_cloud_options.region = region
-    google_cloud_options.job_name = job_name
-    google_cloud_options.staging_location = f'gs://{bucket_name}/raw/staging'
-    google_cloud_options.temp_location = f'gs://{bucket_name}/raw/temp'
-    options.view_as(StandardOptions).runner = 'DataflowRunner'
-
+def run():
     vendedor_cols = ['vendedor', 'cod_cliente']
     clientes_cols = ['nome_cliente', 'cod_cliente', 'uf', 'email', 'fone']
-    result_cols = ['cod_cliente', 'vendedor_nome', 'nome_cliente', 'uf_cliente', 'email_cliente', 'fone_cliente']
-
-    # Cria o Pipeline
-    with beam.Pipeline(options=options) as p:
+    result_cols = ['cod_cliente', 'vendedor_nome', 'nome_cliente', 'uf_cliente','email_cliente', 'fone_cliente']
+    schema = 'cod_cliente:STRING,vendedor_nome:STRING,nome_cliente:STRING,uf_cliente:STRING,email_cliente:STRING,fone_cliente:STRING'
+    # Crie um pipeline usando o DirectRunner
+    with beam.Pipeline(runner='DirectRunner') as p:
         vendedor = (
                 p
-                | 'Readfile Vendedor' >> beam.io.ReadFromText('gs://intelbras-bucket/trusted/vendedores.csv',
+                | 'Readfile Vendedor' >> beam.io.ReadFromText('../files_output/vendedores.csv',
                                                               skip_header_lines=1)
                 | 'Vendedor to List' >> beam.Map(text_to_list)
                 | 'Vendedor do Dict' >> beam.Map(lambda lista: dict(zip(vendedor_cols, lista)))
@@ -92,7 +68,7 @@ def run(credentials_path, bucket_name, project_id, region, job_name, argv=None):
 
         cliente = (
                 p
-                | 'Readfile Clientes' >> beam.io.ReadFromText('gs://intelbras-bucket/trusted/clientes.csv',
+                | 'Readfile Clientes' >> beam.io.ReadFromText('../files_output/clientes.csv',
                                                               skip_header_lines=1)
                 | 'Clientes to List' >> beam.Map(text_to_list)
                 | 'Clientes do Dict' >> beam.Map(lambda lista: dict(zip(clientes_cols, lista)))
@@ -103,9 +79,9 @@ def run(credentials_path, bucket_name, project_id, region, job_name, argv=None):
                 {'vendedor': vendedor, 'cliente': cliente}
                 | 'CoGroupByCodCliente' >> beam.CoGroupByKey()
                 | 'Gera grouped CSV' >> beam.Map(tupla_para_csv)
-                | 'Write Result' >> beam.io.WriteToText('gs://intelbras-bucket/refined/clientes_vendedores_grouped',
+                #| 'PrintResults' >> beam.Map(print)
+                | 'Write Result' >> beam.io.WriteToText('files_output/clientes_vendedores_grouped',
                                                         file_name_suffix='.csv',
-
                                                         header=';'.join(result_cols),
                                                         num_shards=1,
                                                         shard_name_template='')
@@ -113,9 +89,4 @@ def run(credentials_path, bucket_name, project_id, region, job_name, argv=None):
 
 
 if __name__ == '__main__':
-    bucket_name = "intelbras-bucket"
-    credentials_path = "credentials.json"
-    project_id = "logical-voyage-427513-a6"
-    region = "us-east1"
-    job_name = 'df-pipeline-refined'
-    run(credentials_path, bucket_name, project_id, region, job_name)
+    run()
