@@ -412,7 +412,7 @@ if __name__ == '__main__':
     bucket_name = "intelbras-bucket"
     credentials_path = "credentials.json"
     project_id = "logical-voyage-427513-a6"
-    region = "us-east1"
+    region = "us-central1"
     job_name = 'df-pipeline-complete'
     #logging.getLogger().setLevel(logging.INFO)
     run(credentials_path, bucket_name, project_id, region, job_name)
